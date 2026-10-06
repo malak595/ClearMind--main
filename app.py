@@ -22,7 +22,7 @@ st.markdown(f"""
 st.title("🧠 ClearMind AI")
 st.write("مرحباً بك في فضائك الآمن لإدارة التوتر والصحة النفسية مع تطبيق ClearMind.")
 
-api_key = st.secrets["gemini_api_key"]
+api_key = st.secrets["gemini_api_key"
 
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-2.5-flash")
