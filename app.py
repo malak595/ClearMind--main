@@ -1,6 +1,5 @@
 import streamlit as st
 import google.generativeai as genai
-import os
 
 # 1. نفس الألوان الهادئة الباستيل اللي اختاريتيها
 COLORS = {
@@ -23,13 +22,10 @@ st.markdown(f"""
 st.title("🧠 ClearMind AI")
 st.write("مرحباً بك في فضائك الآمن لإدارة التوتر والصحة النفسية مع تطبيق ClearMind.")
 
-# 2. إعداد Gemini بشكل آمن
-api_key = os.environ.get("GEMINI_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.5-flash")
-else:
-    st.warning("المرجو إعداد مفتاح API Key الخاص بـ Gemini في منصة الاستضافة.")
+api_key = "AQ.Ab8RN6Ijtkl5D51Uv9DBWRq1EGpXrNcPxzFVoPE9uKFFbtWtsw"
+
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 # صندوق المحادثة الذكي
 if "messages" not in st.session_state:
