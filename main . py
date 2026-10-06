@@ -1,0 +1,952 @@
+import customtkinter as ctk
+from datetime import datetime
+
+# إعدادات المظهر العام: نظام فاتح بألوان باستيل مهدئة
+ctk.set_appearance_mode("light")  
+ctk.set_default_color_theme("blue")
+
+COLORS = {
+    "off_white": "#FFF9F2",
+    "sky_blue": "#A9D9E8",
+    "sky_blue_hover": "#8CC8DC",
+    "lavender": "#C7B9E8",
+    "lavender_hover": "#B2A0DA",
+    "soft_yellow": "#F5DEA0",
+    "soft_yellow_hover": "#EBCF78",
+    "peach": "#F4C7B5",
+    "peach_hover": "#EBAF98",
+    "pink": "#E9B9C8",
+    "pink_hover": "#DFA0B5",
+    "ink": "#354052",
+    "paper": "#FFFCF8",
+}
+
+class ClearMindApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+
+        # إعدادات النافذة الرئيسية
+        self.title("ClearMind")
+        self.geometry("900x720")
+        self.configure(fg_color=COLORS["off_white"])
+
+        # نظام الترجمة والبيانات الداخلية
+        self.lang = "en"
+        self.journal_locked = True
+        self.pin_code = "1234" 
+        self.saved_notes = [] 
+        self.breath_state = 0  
+        self.breath_timer = 0
+        self.selected_mood = "calm"
+        self.daily_goals = []
+        self.completed_goals = 0
+        self.streak = 0
+        self.quick_calm_active = False
+
+        self.translations = {
+            "ar": {
+                "welcome": "مرحباً بك في ClearMind",
+                "quote": "💡 مقولة اليوم: 'السلام الداخلي يبدأ في اللحظة التي تختار فيها ألا تسمح لأحداث العالم بالتحكم في مشاعرك.'",
+                "btn_chat": "💬 التحدث مع المساعد الذكي",
+                "btn_breath": "🧘 تمارين الاسترخاء والتهدئة",
+                "btn_sounds": "🎵 مكتبة الموسيقى والأصوات",
+                "btn_journal": "📝 المذكرات السرية المقفلة",
+                "chat_title": "المساعد النفسي والارشادي الذكي",
+                "chat_placeholder": "اكتب ما تشعر به أو ما يقلقك هنا...",
+                "btn_send": "إرسال",
+                "btn_back": "رجوع",
+                "bot_welcome": "مرحباً بك! أنا هنا لأستمع إليك بإنصات وأقدم لك النصائح والإرشادات. كيف تشعر اليوم وما الذي يشغل بالك؟\n\n",
+                "exercise_title": "قائمة تمارين الاسترخاء",
+                "btn_t1": "🧘 تمرين التنفس (4-7-8)",
+                "btn_t2": "💪 استرخاء العضلات المتدرج",
+                "btn_t3": "🧠 تأمل تصفية الذهن",
+                "sound_title": "مكتبة الأصوات والموسيقى المهدئة",
+                "sound_subtitle": "اختر الصوت الذي يساعدك على الراحة أو التركيز الآن:",
+                "breath_inhale": "🌬️ شهيق... خذ نفس عميق",
+                "breath_hold": "🛑 إحبس النفس... استرخِ",
+                "breath_exhale": "💨 زفير... أخرج الهواء ببطء",
+                "btn_start_breath": "إبدأ التمرين",
+                "pmr_text": "✨ تمرين استرخاء العضلات المتدرج (PMR):\n\n1. خذ نفساً عميقاً وأغلق عينيك.\n2. اضغط على عضلات يديك بقوة لـ 5 ثوانٍ... ثم ارخها تماماً واشعر بالراحة.\n3. الآن، ارفع كتفيك نحو أذنيك وزيرهما لـ 5 ثوانٍ... ثم أفلتهما واسترخِ.\n4. كرر العملية مع عضلات الوجه والقدمين لتتخلص من كل التوتر الجسدي.",
+                "meditation_text": "✨ تأمل تصفية الذهن السريع:\n\n1. اجلس في مكان مريح واجعل ظهرك مستقيماً بوضعية مريحة.\n2. ركز كل انتباهك على حركة الهواء وهو يدخل ويخرج من أنفك.\n3. إذا تشتت انتباهك بأفكار، لا تقلق، هذا طبيعي. أرجع تركيزك بلطف إلى تنفسك.\n4. استمر في هذا التركيز لمدة 5 دقائق لتستعيد سلامك الداخلي.",
+                "journal_title": "🔒 المذكرات الشخصية السرية",
+                "journal_enter_pin": "المرجو إدخال الرقم السري (PIN):",
+                "btn_unlock": "فتح القفل",
+                "journal_welcome": "✨ مساحتك الآمنة: اكتب مشاعرك، أسرارك، أو أفكارك السلبية هنا.",
+                "note_title_p": "عنوان المذكرة...",
+                "btn_save_note": "💾 حفظ في المذكرات",
+                "btn_burn_note": "🔥 تدمير وحرق الفكرة السلبية"
+            },
+            "en": {
+                "welcome": "Welcome to ClearMind",
+                "quote": "💡 Quote: 'Inner peace begins the moment you choose not to allow events to control your emotions.'",
+                "btn_chat": "💬 Chat with AI Companion",
+                "btn_breath": "🧘 Relaxation & Calming Exercises",
+                "btn_sounds": "🎵 Calming Music & Sounds",
+                "btn_journal": "📝 Private Locked Journal",
+                "chat_title": "AI Mental Health Companion",
+                "chat_placeholder": "Type how you feel or what's on your mind...",
+                "btn_send": "Send",
+                "btn_back": "Back",
+                "bot_welcome": "Hello! I am here to listen and guide you. How are you feeling today?\n\n",
+                "exercise_title": "Relaxation Exercises Menu",
+                "btn_t1": "🧘 Breathing Exercise (4-7-8)",
+                "btn_t2": "💪 Progressive Muscle Relaxation",
+                "btn_t3": "🧠 Mind Clearing Meditation",
+                "sound_title": "Calming Music & Nature Sounds",
+                "sound_subtitle": "Choose the best sound to help you relax or focus now:",
+                "breath_inhale": "🌬️ Inhale... Breathe in deeply",
+                "breath_hold": "🛑 Hold... Stay calm",
+                "breath_exhale": "💨 Exhale... Release slowly",
+                "btn_start_breath": "Start Exercise",
+                "pmr_text": "Progressive Muscle Relaxation (PMR):\n\n1. Take a deep breath and close your eyes.\n2. Tense your hand muscles tightly for 5 seconds... then release.\n3. Shrug your shoulders up toward your ears for 5 seconds... then let go completely.\n4. Repeat with your facial muscles and feet.",
+                "meditation_text": "Mind Clearing Meditation:\n\n1. Sit comfortably with your spine straight.\n2. Focus all your attention on your breath going in and out.\n3. If your mind wanders, gently bring it back to your breathing.\n4. Continue for 5 minutes.",
+                "journal_title": "🔒 Private Locked Journal",
+                "journal_enter_pin": "Enter your PIN Code:",
+                "btn_unlock": "Unlock",
+                "journal_welcome": "✨ Safe Space: Write down your thoughts, secrets, or negative vibes.",
+                "note_title_p": "Note title...",
+                "btn_save_note": "💾 Save Note",
+                "btn_burn_note": "🔥 Burn Negative Thought"
+            },
+            "fr": {
+                "welcome": "Bienvenue sur ClearMind",
+                "quote": "💡 Citation: 'La paix intérieure commence au moment où vous choisissez de ne pas laisser un événement contrôler vos émotions.'",
+                "btn_chat": "💬 Discuter avec l'IA",
+                "btn_breath": "🧘 Exercices de Relaxation",
+                "btn_sounds": "🎵 Musique et Sons Calmants",
+                "btn_journal": "📝 Journal Intime Sécurisé",
+                "chat_title": "Compagnon d'Orientation IA",
+                "chat_placeholder": "Écrivez ce que vous ressentez ici...",
+                "btn_send": "Envoyer",
+                "btn_back": "Retour",
+                "bot_welcome": "Bonjour! Je suis là pour vous écouter et vous conseiller.",
+                "exercise_title": "Menu des Exercices de Relaxation",
+                "btn_t1": "🧘 Exercice de Respiration (4-7-8)",
+                "btn_t2": "💪 Relaxation Musculaire Progressive",
+                "btn_t3": "🧠 Méditation Flash",
+                "sound_title": "Musique et Sons de la Nature",
+                "sound_subtitle": "Choisissez le meilleur son pour vous détendre :",
+                "breath_inhale": "🌬️ Inspirez... Profondément",
+                "breath_hold": "🛑 Bloquez... Restez calme",
+                "breath_exhale": "💨 Expirez... Relâchez lentement",
+                "btn_start_breath": "Commencer",
+                "pmr_text": "Relaxation Musculaire Progressive (PMR) :\n\n1. Inspirez profondément et fermez les yeux.\n2. Contractez les muscles de vos mains pendant 5 secondes... puis relâchez.",
+                "meditation_text": "Méditation Flash :\n\n1. Asseyez-vous confortablement, le dos droit.\n2. Concentrez toute votre attention sur votre respiration.",
+                "journal_title": "🔒 Journal Intime Sécurisé",
+                "journal_enter_pin": "Entrez le code PIN :",
+                "btn_unlock": "Déverrouiller",
+                "journal_welcome": "✨ Espace Sécurisé : Écrivez vos pensées.",
+                "note_title_p": "Titre de la note...",
+                "btn_save_note": "💾 Sauvegarder",
+                "btn_burn_note": "🔥 Brûler la pensée négative"
+            }
+        }
+
+        # زر اختيار اللغة في الأعلى
+        self.lang_menu = ctk.CTkOptionMenu(
+            self, values=["العربية", "English", "Français"], command=self.change_language
+        )
+        self.lang_menu.pack(anchor="ne", padx=30, pady=15)
+
+        # حاوية الصفحات
+        self.home_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.chat_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.breath_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.sounds_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.journal_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.wellness_frame = ctk.CTkFrame(self, fg_color="transparent")
+
+        # بناء كاع الصفحات
+        self.create_home_page()
+        self.create_chat_page()
+        self.create_breath_page()
+        self.create_sounds_page()
+        self.create_journal_page()
+        self.create_wellness_page()
+
+        self.apply_palette()
+        self.update_labels()
+        self.show_frame(self.home_frame)
+
+    def apply_palette(self):
+        button_styles = [
+            (self.btn_chat, "sky_blue", "sky_blue_hover"),
+            (self.btn_breath, "lavender", "lavender_hover"),
+            (self.btn_sounds, "soft_yellow", "soft_yellow_hover"),
+            (self.btn_journal, "pink", "pink_hover"),
+            (self.chat_back_btn, "sky_blue", "sky_blue_hover"),
+            (self.chat_send_btn, "peach", "peach_hover"),
+            (self.breath_back_btn, "sky_blue", "sky_blue_hover"),
+            (self.breath_start_btn, "lavender", "lavender_hover"),
+            (self.sounds_back_btn, "sky_blue", "sky_blue_hover"),
+            (self.journal_back_btn, "sky_blue", "sky_blue_hover"),
+            (self.unlock_btn, "pink", "pink_hover"),
+            (self.save_note_btn, "sky_blue", "sky_blue_hover"),
+            (self.burn_note_btn, "peach", "peach_hover"),
+            (self.quick_calm_btn, "peach", "peach_hover"),
+            (self.wellness_btn, "lavender", "lavender_hover"),
+            (self.wellness_back_btn, "sky_blue", "sky_blue_hover"),
+            (self.recommend_btn, "soft_yellow", "soft_yellow_hover"),
+            (self.add_goal_btn, "sky_blue", "sky_blue_hover"),
+            (self.complete_goal_btn, "pink", "pink_hover"),
+        ]
+        for button, color, hover_color in button_styles:
+            button.configure(
+                fg_color=COLORS[color],
+                hover_color=COLORS[hover_color],
+                text_color=COLORS["ink"],
+            )
+
+        sound_colors = [
+            ("sky_blue", "sky_blue_hover"),
+            ("lavender", "lavender_hover"),
+            ("soft_yellow", "soft_yellow_hover"),
+            ("peach", "peach_hover"),
+        ]
+        for button, (color, hover_color) in zip(self.sound_buttons, sound_colors):
+            button.configure(
+                fg_color=COLORS[color],
+                hover_color=COLORS[hover_color],
+                text_color=COLORS["ink"],
+            )
+        for button, (color, hover_color) in zip(self.playlist_buttons, sound_colors):
+            button.configure(
+                fg_color=COLORS[color],
+                hover_color=COLORS[hover_color],
+                text_color=COLORS["ink"],
+            )
+
+        self.lang_menu.configure(
+            fg_color=COLORS["paper"],
+            button_color=COLORS["sky_blue"],
+            button_hover_color=COLORS["sky_blue_hover"],
+            text_color=COLORS["ink"],
+        )
+        self.lbl_welcome.configure(text_color=COLORS["ink"])
+        self.lbl_quote.configure(text_color=COLORS["ink"])
+        self.breath_instruction.configure(text_color=COLORS["ink"])
+        self.chat_disclaimer.configure(text_color=COLORS["ink"])
+        self.wellness_title.configure(text_color=COLORS["ink"])
+        self.wellness_subtitle.configure(text_color=COLORS["ink"])
+        self.chat_text.configure(fg_color=COLORS["paper"], text_color=COLORS["ink"])
+        self.note_content.configure(fg_color=COLORS["paper"], text_color=COLORS["ink"])
+        self.notes_box.configure(fg_color=COLORS["paper"], text_color=COLORS["ink"])
+        self.goals_box.configure(fg_color=COLORS["paper"], text_color=COLORS["ink"])
+
+    def create_home_page(self):
+        self.lbl_welcome = ctk.CTkLabel(self.home_frame, text="", font=("Segoe UI", 32, "bold"))
+        self.lbl_welcome.pack(pady=(20, 5))
+
+        self.lbl_quote = ctk.CTkLabel(self.home_frame, text="", font=("Segoe UI", 13, "italic"), wraplength=600)
+        self.lbl_quote.pack(pady=(0, 40))
+
+        btn_style = {"font": ("Segoe UI", 16, "bold"), "height": 55, "width": 420, "corner_radius": 25}
+        
+        self.btn_chat = ctk.CTkButton(self.home_frame, text="", command=lambda: self.show_frame(self.chat_frame), **btn_style)
+        self.btn_chat.pack(pady=10)
+
+        self.btn_breath = ctk.CTkButton(self.home_frame, text="", command=lambda: self.show_frame(self.breath_frame), **btn_style)
+        self.btn_breath.pack(pady=10)
+
+        self.btn_sounds = ctk.CTkButton(self.home_frame, text="", command=lambda: self.show_frame(self.sounds_frame), **btn_style)
+        self.btn_sounds.pack(pady=10)
+
+        self.btn_journal = ctk.CTkButton(self.home_frame, text="", command=lambda: self.show_frame(self.journal_frame), font=("Segoe UI", 16, "bold"), height=55, width=420, corner_radius=25)
+        self.btn_journal.pack(pady=10)
+
+        self.quick_calm_btn = ctk.CTkButton(
+            self.home_frame,
+            text="⚡ Quick Calm",
+            command=self.quick_calm,
+            width=240,
+            height=46,
+            corner_radius=20,
+            font=("Segoe UI", 14, "bold"),
+        )
+        self.quick_calm_btn.pack(pady=(22, 8))
+
+        self.wellness_btn = ctk.CTkButton(
+            self.home_frame,
+            text="🌿 Wellness Hub",
+            command=lambda: self.show_frame(self.wellness_frame),
+            width=240,
+            height=46,
+            corner_radius=20,
+            font=("Segoe UI", 14, "bold"),
+        )
+        self.wellness_btn.pack(pady=8)
+
+    def create_chat_page(self):
+        self.chat_back_btn = ctk.CTkButton(
+            self.chat_frame,
+            text="",
+            command=lambda: self.show_frame(self.home_frame),
+            width=160,
+            height=40,
+            corner_radius=18,
+            font=("Segoe UI", 14, "bold")
+        )
+        self.chat_back_btn.pack(anchor="w", padx=20, pady=(20, 10))
+
+        self.chat_title_label = ctk.CTkLabel(
+            self.chat_frame,
+            text="",
+            font=("Segoe UI", 28, "bold")
+        )
+        self.chat_title_label.pack(pady=(0, 15))
+
+        self.chat_disclaimer = ctk.CTkLabel(
+            self.chat_frame,
+            text="Supportive guidance only - I am not a psychologist or doctor.",
+            font=("Segoe UI", 12, "italic"),
+            wraplength=700,
+        )
+        self.chat_disclaimer.pack(pady=(0, 8))
+
+        self.chat_text = ctk.CTkTextbox(
+            self.chat_frame,
+            width=760,
+            height=430,
+            font=("Segoe UI", 15),
+            wrap="word",
+            corner_radius=18,
+            fg_color="#F8FAFC",
+            text_color="#0F172A"
+        )
+        self.chat_text.pack(padx=20, pady=5)
+        self.chat_text.insert("end", "")
+        self.chat_text.configure(state="disabled")
+
+        bottom_row = ctk.CTkFrame(self.chat_frame, fg_color="transparent")
+        bottom_row.pack(fill="x", padx=20, pady=(10, 20))
+
+        self.chat_entry = ctk.CTkEntry(
+            bottom_row,
+            width=620,
+            height=48,
+            placeholder_text="",
+            font=("Segoe UI", 15),
+            border_width=1
+        )
+        self.chat_entry.pack(side="left", expand=True, padx=(0, 10))
+        self.chat_entry.bind("<Return>", lambda event: self.send_message())
+
+        self.chat_send_btn = ctk.CTkButton(
+            bottom_row,
+            text="",
+            command=self.send_message,
+            width=120,
+            height=48,
+            corner_radius=18,
+            font=("Segoe UI", 14, "bold")
+        )
+        self.chat_send_btn.pack(side="right")
+
+    def create_breath_page(self):
+        self.breath_back_btn = ctk.CTkButton(
+            self.breath_frame,
+            text="",
+            command=lambda: self.show_frame(self.home_frame),
+            width=160,
+            height=40,
+            corner_radius=18,
+            font=("Segoe UI", 14, "bold")
+        )
+        self.breath_back_btn.pack(anchor="w", padx=20, pady=(20, 10))
+
+        self.breath_title = ctk.CTkLabel(
+            self.breath_frame,
+            text="",
+            font=("Segoe UI", 30, "bold")
+        )
+        self.breath_title.pack(pady=(0, 20))
+
+        self.breath_instruction = ctk.CTkLabel(
+            self.breath_frame,
+            text="",
+            font=("Segoe UI", 24, "bold"),
+            wraplength=680,
+            justify="center"
+        )
+        self.breath_instruction.pack(pady=(0, 25))
+
+        self.breath_start_btn = ctk.CTkButton(
+            self.breath_frame,
+            text="",
+            command=self.start_breathing,
+            width=260,
+            height=50,
+            corner_radius=22,
+            font=("Segoe UI", 16, "bold")
+        )
+        self.breath_start_btn.pack(pady=10)
+
+        self.breath_status = ctk.CTkLabel(
+            self.breath_frame,
+            text="",
+            font=("Segoe UI", 14),
+            wraplength=600,
+            justify="center"
+        )
+        self.breath_status.pack(pady=(20, 0))
+
+    def create_sounds_page(self):
+        self.sounds_back_btn = ctk.CTkButton(
+            self.sounds_frame,
+            text="",
+            command=lambda: self.show_frame(self.home_frame),
+            width=160,
+            height=40,
+            corner_radius=18,
+            font=("Segoe UI", 14, "bold")
+        )
+        self.sounds_back_btn.pack(anchor="w", padx=20, pady=(20, 10))
+
+        self.sounds_title = ctk.CTkLabel(
+            self.sounds_frame,
+            text="",
+            font=("Segoe UI", 28, "bold")
+        )
+        self.sounds_title.pack(pady=(0, 5))
+
+        self.sounds_subtitle = ctk.CTkLabel(
+            self.sounds_frame,
+            text="",
+            font=("Segoe UI", 15),
+            wraplength=700
+        )
+        self.sounds_subtitle.pack(pady=(0, 20))
+
+        self.sound_buttons = []
+        for label, command in [
+            ("🌧️ Rain", lambda: self.choose_sound("rain")),
+            ("🌊 Ocean", lambda: self.choose_sound("ocean")),
+            ("🌙 Night", lambda: self.choose_sound("night")),
+            ("🎧 Focus", lambda: self.choose_sound("focus")),
+        ]:
+            btn = ctk.CTkButton(
+                self.sounds_frame,
+                text=label,
+                command=command,
+                width=380,
+                height=52,
+                corner_radius=20,
+                font=("Segoe UI", 16, "bold")
+            )
+            btn.pack(pady=8)
+            self.sound_buttons.append(btn)
+
+        self.sound_status = ctk.CTkLabel(
+            self.sounds_frame,
+            text="",
+            font=("Segoe UI", 16, "bold"),
+            wraplength=600
+        )
+        self.sound_status.pack(pady=(25, 0))
+
+    def create_journal_page(self):
+        self.journal_back_btn = ctk.CTkButton(
+            self.journal_frame,
+            text="",
+            command=lambda: self.show_frame(self.home_frame),
+            width=160,
+            height=40,
+            corner_radius=18,
+            font=("Segoe UI", 14, "bold")
+        )
+        self.journal_back_btn.pack(anchor="w", padx=20, pady=(20, 10))
+
+        self.journal_title = ctk.CTkLabel(
+            self.journal_frame,
+            text="",
+            font=("Segoe UI", 28, "bold")
+        )
+        self.journal_title.pack(pady=(0, 10))
+
+        self.pin_container = ctk.CTkFrame(self.journal_frame, fg_color="transparent")
+        self.pin_container.pack(pady=(10, 15))
+
+        self.pin_label = ctk.CTkLabel(
+            self.pin_container,
+            text="",
+            font=("Segoe UI", 16)
+        )
+        self.pin_label.pack(pady=(0, 10))
+
+        self.pin_entry = ctk.CTkEntry(
+            self.pin_container,
+            width=240,
+            height=42,
+            placeholder_text="",
+            show="*",
+            font=("Segoe UI", 16)
+        )
+        self.pin_entry.pack(pady=(0, 10))
+        self.pin_entry.bind("<Return>", lambda event: self.unlock_journal())
+
+        self.unlock_btn = ctk.CTkButton(
+            self.pin_container,
+            text="",
+            command=self.unlock_journal,
+            width=180,
+            height=42,
+            corner_radius=18,
+            font=("Segoe UI", 14, "bold")
+        )
+        self.unlock_btn.pack()
+
+        self.journal_editor = ctk.CTkFrame(self.journal_frame, fg_color="transparent")
+
+        self.editor_welcome = ctk.CTkLabel(
+            self.journal_editor,
+            text="",
+            font=("Segoe UI", 15),
+            wraplength=700
+        )
+        self.editor_welcome.pack(pady=(0, 10))
+
+        self.note_title_entry = ctk.CTkEntry(
+            self.journal_editor,
+            width=500,
+            height=40,
+            placeholder_text="",
+            font=("Segoe UI", 14)
+        )
+        self.note_title_entry.pack(pady=(0, 10))
+
+        self.note_content = ctk.CTkTextbox(
+            self.journal_editor,
+            width=650,
+            height=180,
+            font=("Segoe UI", 14),
+            wrap="word",
+            fg_color="#F8FAFC",
+            text_color="#0F172A"
+        )
+        self.note_content.pack(pady=(0, 10))
+
+        save_row = ctk.CTkFrame(self.journal_editor, fg_color="transparent")
+        save_row.pack(pady=(0, 10))
+
+        self.save_note_btn = ctk.CTkButton(
+            save_row,
+            text="",
+            command=self.save_note,
+            width=220,
+            height=42,
+            corner_radius=18,
+            font=("Segoe UI", 14, "bold")
+        )
+        self.save_note_btn.pack(side="left", padx=(0, 10))
+
+        self.burn_note_btn = ctk.CTkButton(
+            save_row,
+            text="",
+            command=self.burn_negative_thought,
+            width=220,
+            height=42,
+            corner_radius=18,
+            font=("Segoe UI", 14, "bold")
+        )
+        self.burn_note_btn.pack(side="left")
+
+        self.notes_label = ctk.CTkLabel(
+            self.journal_editor,
+            text="",
+            font=("Segoe UI", 18, "bold")
+        )
+        self.notes_label.pack(pady=(10, 5))
+
+        self.notes_box = ctk.CTkTextbox(
+            self.journal_editor,
+            width=680,
+            height=150,
+            font=("Segoe UI", 13),
+            wrap="word",
+            fg_color="#F8FAFC",
+            text_color="#0F172A"
+        )
+        self.notes_box.pack(pady=(0, 10))
+        self.notes_box.configure(state="disabled")
+
+    def create_wellness_page(self):
+        self.wellness_back_btn = ctk.CTkButton(
+            self.wellness_frame,
+            text="Back",
+            command=lambda: self.show_frame(self.home_frame),
+            width=130,
+            height=38,
+            corner_radius=18,
+            font=("Segoe UI", 13, "bold"),
+        )
+        self.wellness_back_btn.pack(anchor="w", padx=20, pady=(16, 8))
+
+        self.wellness_scroll = ctk.CTkScrollableFrame(
+            self.wellness_frame,
+            fg_color="transparent",
+            width=820,
+        )
+        self.wellness_scroll.pack(fill="both", expand=True, padx=18, pady=(0, 12))
+
+        self.wellness_title = ctk.CTkLabel(
+            self.wellness_scroll,
+            text="🌿 Wellness Hub",
+            font=("Segoe UI", 28, "bold"),
+        )
+        self.wellness_title.pack(pady=(4, 2))
+        self.wellness_subtitle = ctk.CTkLabel(
+            self.wellness_scroll,
+            text="Small, gentle steps for the way you feel today.",
+            font=("Segoe UI", 14),
+            wraplength=700,
+        )
+        self.wellness_subtitle.pack(pady=(0, 14))
+
+        mood_row = ctk.CTkFrame(self.wellness_scroll, fg_color=COLORS["paper"], corner_radius=16)
+        mood_row.pack(fill="x", pady=6)
+        self.mood_label = ctk.CTkLabel(mood_row, text="How are you feeling?", font=("Segoe UI", 14, "bold"))
+        self.mood_label.pack(side="left", padx=14, pady=12)
+        self.mood_menu = ctk.CTkOptionMenu(
+            mood_row,
+            values=["Calm", "Anxious", "Low", "Tired", "Unfocused"],
+            command=self.update_mood,
+            width=150,
+        )
+        self.mood_menu.pack(side="right", padx=14, pady=9)
+
+        activity_row = ctk.CTkFrame(self.wellness_scroll, fg_color=COLORS["paper"], corner_radius=16)
+        activity_row.pack(fill="x", pady=6)
+        self.activity_label = ctk.CTkLabel(activity_row, text="What do you need?", font=("Segoe UI", 14, "bold"))
+        self.activity_label.pack(side="left", padx=14, pady=12)
+        self.activity_menu = ctk.CTkOptionMenu(
+            activity_row,
+            values=["Relax", "Focus", "Sleep", "Reset"],
+            command=lambda value: self.recommend_wellness(),
+            width=150,
+        )
+        self.activity_menu.pack(side="right", padx=14, pady=9)
+
+        self.recommend_btn = ctk.CTkButton(
+            self.wellness_scroll,
+            text="✨ Recommend something for me",
+            command=self.recommend_wellness,
+            height=44,
+            corner_radius=18,
+            font=("Segoe UI", 14, "bold"),
+        )
+        self.recommend_btn.pack(fill="x", pady=(8, 4))
+        self.recommendation_label = ctk.CTkLabel(
+            self.wellness_scroll,
+            text="Choose a mood and activity for a gentle suggestion.",
+            font=("Segoe UI", 14),
+            wraplength=700,
+        )
+        self.recommendation_label.pack(pady=(2, 12))
+
+        self.goal_title = ctk.CTkLabel(self.wellness_scroll, text="Today's gentle goal", font=("Segoe UI", 19, "bold"))
+        self.goal_title.pack(anchor="w", pady=(8, 4))
+        goal_row = ctk.CTkFrame(self.wellness_scroll, fg_color=COLORS["paper"], corner_radius=16)
+        goal_row.pack(fill="x", pady=4)
+        self.goal_entry = ctk.CTkEntry(goal_row, placeholder_text="e.g. Take one mindful break", height=40)
+        self.goal_entry.pack(side="left", fill="x", expand=True, padx=(12, 8), pady=10)
+        self.add_goal_btn = ctk.CTkButton(goal_row, text="Add", command=self.add_goal, width=80, height=38, corner_radius=16)
+        self.add_goal_btn.pack(side="right", padx=(0, 12), pady=10)
+        self.goals_box = ctk.CTkTextbox(self.wellness_scroll, height=85, font=("Segoe UI", 13), corner_radius=14, fg_color=COLORS["paper"], text_color=COLORS["ink"])
+        self.goals_box.pack(fill="x", pady=(4, 2))
+        self.goals_box.configure(state="disabled")
+        self.complete_goal_btn = ctk.CTkButton(
+            self.wellness_scroll,
+            text="Mark a goal complete",
+            command=self.complete_goal,
+            width=190,
+            height=34,
+            corner_radius=15,
+            font=("Segoe UI", 12, "bold"),
+        )
+        self.complete_goal_btn.pack(anchor="w", pady=(4, 0))
+        self.streak_label = ctk.CTkLabel(self.wellness_scroll, text="🌱 0-day streak - consistency without pressure", font=("Segoe UI", 13, "bold"))
+        self.streak_label.pack(anchor="w", pady=(3, 12))
+
+        self.exercises_title = ctk.CTkLabel(self.wellness_scroll, text="Relaxation exercises", font=("Segoe UI", 19, "bold"))
+        self.exercises_title.pack(anchor="w", pady=(4, 4))
+        exercise_data = [
+            ("🫁 Box breathing", "Inhale 4, hold 4, exhale 4, hold 4", self.start_box_breathing),
+            ("🖐️ 5-4-3-2-1 grounding", "Name what you can see, feel, hear, smell, and taste.", self.show_grounding),
+            ("🧘 Gentle stretch reset", "Roll your shoulders, unclench your jaw, and stretch slowly.", self.show_stretch),
+            ("🌙 Guided relaxation", "Soften your body from forehead to feet, one area at a time.", self.show_relaxation),
+        ]
+        self.exercise_buttons = []
+        for title, detail, command in exercise_data:
+            button = ctk.CTkButton(
+                self.wellness_scroll,
+                text=f"{title}\n{detail}",
+                command=command,
+                height=58,
+                corner_radius=16,
+                font=("Segoe UI", 13, "bold"),
+                anchor="w",
+            )
+            button.pack(fill="x", pady=4)
+            self.exercise_buttons.append(button)
+
+        self.playlist_title = ctk.CTkLabel(self.wellness_scroll, text="Peaceful playlists", font=("Segoe UI", 19, "bold"))
+        self.playlist_title.pack(anchor="w", pady=(14, 4))
+        self.playlist_label = ctk.CTkLabel(
+            self.wellness_scroll,
+            text="Pick a sound from the library to set the atmosphere. Audio playback can be connected here later.",
+            font=("Segoe UI", 13),
+            wraplength=700,
+        )
+        self.playlist_label.pack(anchor="w", pady=(0, 6))
+        self.playlist_buttons = []
+        for label, sound_name in [
+            ("🌧️ Rainy Focus", "rain"),
+            ("🌊 Ocean Sleep", "ocean"),
+            ("🌌 Night Meditation", "night"),
+            ("🎧 Soft Study", "focus"),
+        ]:
+            playlist_button = ctk.CTkButton(
+                self.wellness_scroll,
+                text=label,
+                command=lambda selected=sound_name: self.choose_sound(selected),
+                height=40,
+                corner_radius=16,
+                font=("Segoe UI", 13, "bold"),
+            )
+            playlist_button.pack(fill="x", pady=3)
+            self.playlist_buttons.append(playlist_button)
+        self.playlist_status = ctk.CTkLabel(
+            self.wellness_scroll,
+            text="",
+            font=("Segoe UI", 12, "bold"),
+            wraplength=700,
+        )
+        self.playlist_status.pack(anchor="w", pady=(3, 10))
+
+        self.resources_title = ctk.CTkLabel(self.wellness_scroll, text="Resources & support", font=("Segoe UI", 19, "bold"))
+        self.resources_title.pack(anchor="w", pady=(4, 4))
+        self.resources_label = ctk.CTkLabel(
+            self.wellness_scroll,
+            text="ClearMind offers general wellness information, not diagnosis or treatment. If feelings are intense, persistent, or affecting safety, reach out to a trusted person or qualified mental health professional. In an immediate crisis, contact local emergency services or a crisis line in your country.",
+            font=("Segoe UI", 12),
+            wraplength=700,
+            justify="left",
+        )
+        self.resources_label.pack(anchor="w", pady=(0, 18))
+
+    def show_frame(self, frame):
+        for f in (self.home_frame, self.chat_frame, self.breath_frame, self.sounds_frame, self.journal_frame, self.wellness_frame):
+            f.pack_forget()
+        frame.pack(fill="both", expand=True)
+
+    def quick_calm(self):
+        self.show_frame(self.breath_frame)
+        self.quick_calm_active = True
+        self.start_box_breathing()
+
+    def update_mood(self, value):
+        self.selected_mood = value.lower()
+        self.recommend_wellness()
+
+    def recommend_wellness(self):
+        mood = self.mood_menu.get().lower()
+        activity = self.activity_menu.get().lower()
+        suggestions = {
+            "anxious": "Try box breathing for two minutes, then name five things you can see. You do not have to solve everything at once.",
+            "low": "Choose a soft reset: drink water, step into fresh air, or write one kind sentence to yourself.",
+            "tired": "Pick Ocean Sleep or Guided Relaxation. Lower the lights and let rest be productive enough.",
+            "unfocused": "Try a 5-minute Soft Study playlist and one small task with your phone out of reach.",
+            "calm": "Protect this calm with a mindful stretch or a short journal note about what is helping.",
+        }
+        activity_hint = {
+            "relax": " A slow exhale can help your body shift into rest.",
+            "focus": " Keep the next step small and time-box it for five minutes.",
+            "sleep": " Make the room comfortable and avoid pressuring yourself to fall asleep immediately.",
+            "reset": " A change of posture and a sip of water can be a useful first step.",
+        }
+        self.recommendation_label.configure(text=suggestions.get(mood, suggestions["calm"]) + activity_hint.get(activity, ""))
+
+    def add_goal(self):
+        goal = self.goal_entry.get().strip()
+        if not goal:
+            return
+        self.daily_goals.append({"text": goal, "complete": False})
+        self.goal_entry.delete(0, "end")
+        self.refresh_goals()
+
+    def complete_goal(self):
+        for goal in self.daily_goals:
+            if not goal["complete"]:
+                goal["complete"] = True
+                self.completed_goals += 1
+                self.streak = max(self.streak, self.completed_goals)
+                break
+        self.refresh_goals()
+
+    def refresh_goals(self):
+        self.goals_box.configure(state="normal")
+        self.goals_box.delete("1.0", "end")
+        if not self.daily_goals:
+            self.goals_box.insert("end", "Add one small goal for today.")
+        else:
+            for goal in self.daily_goals:
+                marker = "✓" if goal["complete"] else "○"
+                self.goals_box.insert("end", f"{marker} {goal['text']}\n")
+        self.goals_box.configure(state="disabled")
+        self.streak_label.configure(text=f"🌱 {self.streak}-day streak - gentle consistency counts")
+
+    def start_box_breathing(self):
+        self.breath_sequence = [("inhale", 4), ("hold", 4), ("exhale", 4), ("hold", 4)]
+        self.breath_step = 0
+        self.breath_cycle()
+
+    def show_grounding(self):
+        self.breath_instruction.configure(text="5 things you see • 4 you feel • 3 you hear • 2 you smell • 1 you taste")
+        self.breath_status.configure(text="Take your time. Look around gently.")
+        self.show_frame(self.breath_frame)
+
+    def show_stretch(self):
+        self.breath_instruction.configure(text="Drop your shoulders, unclench your jaw, and stretch your neck slowly side to side.")
+        self.breath_status.configure(text="Stop if anything hurts. Keep each movement easy.")
+        self.show_frame(self.breath_frame)
+
+    def show_relaxation(self):
+        self.breath_instruction.configure(text="Soften your forehead, jaw, shoulders, hands, belly, and legs. Let your next exhale be a little longer.")
+        self.breath_status.configure(text="A three-minute guided body scan.")
+        self.show_frame(self.breath_frame)
+
+    def update_labels(self):
+        t = self.translations[self.lang]
+
+        self.lang_menu.set({"ar": "العربية", "en": "English", "fr": "Français"}[self.lang])
+
+        self.lbl_welcome.configure(text=t["welcome"])
+        self.lbl_quote.configure(text=t["quote"])
+        self.btn_chat.configure(text=t["btn_chat"])
+        self.btn_breath.configure(text=t["btn_breath"])
+        self.btn_sounds.configure(text=t["btn_sounds"])
+        self.btn_journal.configure(text=t["btn_journal"])
+
+        self.chat_back_btn.configure(text=t["btn_back"])
+        self.chat_title_label.configure(text=t["chat_title"])
+        self.chat_entry.configure(placeholder_text=t["chat_placeholder"])
+        self.chat_send_btn.configure(text=t["btn_send"])
+        self.chat_text.configure(state="normal")
+        if not self.chat_text.get("1.0", "end").strip():
+            self.chat_text.insert("end", t["bot_welcome"])
+        self.chat_text.configure(state="disabled")
+
+        self.breath_back_btn.configure(text=t["btn_back"])
+        self.breath_title.configure(text=t["exercise_title"])
+        self.breath_start_btn.configure(text=t["btn_start_breath"])
+        self.breath_status.configure(text=t["breath_inhale"])
+
+        self.sounds_back_btn.configure(text=t["btn_back"])
+        self.sounds_title.configure(text=t["sound_title"])
+        self.sounds_subtitle.configure(text=t["sound_subtitle"])
+        self.sound_status.configure(text="")
+
+        self.journal_back_btn.configure(text=t["btn_back"])
+        self.journal_title.configure(text=t["journal_title"])
+        self.pin_label.configure(text=t["journal_enter_pin"])
+        self.unlock_btn.configure(text=t["btn_unlock"])
+        self.editor_welcome.configure(text=t["journal_welcome"])
+        self.note_title_entry.configure(placeholder_text=t["note_title_p"])
+        self.save_note_btn.configure(text=t["btn_save_note"])
+        self.burn_note_btn.configure(text=t["btn_burn_note"])
+        self.notes_label.configure(text="Saved notes" if self.lang == "en" else "الملاحظات المحفوظة" if self.lang == "ar" else "Notes enregistrées")
+
+        if self.journal_locked:
+            self.pin_container.pack()
+            self.journal_editor.pack_forget()
+        else:
+            self.pin_container.pack_forget()
+            self.journal_editor.pack(pady=(0, 20))
+
+        self.refresh_notes_view()
+
+    def change_language(self, selected):
+        mapping = {"العربية": "ar", "English": "en", "Français": "fr"}
+        self.lang = mapping.get(selected, "ar")
+        self.update_labels()
+
+    def send_message(self):
+        user_text = self.chat_entry.get().strip()
+        if not user_text:
+            return
+
+        self.chat_text.configure(state="normal")
+        self.chat_text.insert("end", f"You: {user_text}\n\n")
+        self.chat_text.configure(state="disabled")
+        self.chat_entry.delete(0, "end")
+        def generate_reply(self, text):
+        import google.generativeai as genai
+        import os
+        try:
+        api_key_to_use = os.environ.get("GEMINI_API_KEY")
+            
+        genai.configure(api_key=api_key_to_use)
+        model = genai.GenerativeModel("gemini-2.5-flash")
+            
+        prompt = f"You are ClearMind, a compassionate, supportive, and kind AI mental health companion. Respond to the user with deep empathy. User: {text}"
+        response = model.generate_content(prompt)
+            
+        if response and response.text:
+        return response.text
+        raise Exception("Empty response")
+        except Exception as e:
+        if hasattr(self, 'lang') and self.lang == "ar":
+        return "أنا هنا ديما باش نسمع ليك ونمسح عليك. قولي ليا كثر على شنو حاسة بيه دابا؟"
+        return "I am here for you, always. Please tell me more about what you are going through?"
+
+
+
+
+        
+
+    
+        
+        
+
+    
+            
+        
+        
+        
+            
+        
+            
+                 
+         
+
+    
+            
+            
+               
+        
+
+        
+                
+            
+        
+                
+        
+        
+    
+
+
+
+    def refresh_notes_view(self):
+        self.notes_box.configure(state="normal")
+        self.notes_box.delete("1.0", "end")
+        if not self.saved_notes:
+            self.notes_box.insert("end", "No saved notes yet." if self.lang == "en" else "لا توجد ملاحظات محفوظة بعد." if self.lang == "ar" else "Aucune note enregistrée pour le moment.")
+        else:
+            for note in self.saved_notes:
+                self.notes_box.insert("end", f"• {note['title']}\n{note['content']}\n\n")
+        self.notes_box.configure(state="disabled")
+
+
+if __name__ == "__main__":
+    app = ClearMindApp()
+    app.mainloop()
